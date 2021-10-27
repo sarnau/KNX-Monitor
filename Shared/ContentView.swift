@@ -105,9 +105,9 @@ struct ContentView: View {
 
             Button("Connect") {
                 let frame = KNXIPFrame_CONNECT_REQUEST()
-                frame.controlEndpoint.ip_addr = IPv4(IPv4Address(localHostIP)!.rawUInt32Value)
+				frame.controlEndpoint.ip_addr = IPv4Address(localHostIP)!
                 frame.controlEndpoint.ip_port = localPort
-                frame.dataEndpoint.ip_addr = IPv4(IPv4Address(localHostIP)!.rawUInt32Value)
+				frame.dataEndpoint.ip_addr = IPv4Address(localHostIP)!
                 frame.dataEndpoint.ip_port = localPort
                 frame.criType = .TUNNEL_CONNECTION
                 let data = frame.frame_to_data()
@@ -142,7 +142,7 @@ struct ContentView: View {
                 let frame = KNXIPFrame_DISCONNECT_REQUEST()
                 frame.communicationChannelID = connectChannelID
                 connectChannelID = 0
-                frame.controlEndpoint.ip_addr = IPv4(IPv4Address(localHostIP)!.rawUInt32Value)
+                frame.controlEndpoint.ip_addr = IPv4Address(localHostIP)!
                 frame.controlEndpoint.ip_port = localPort
                 let data = frame.frame_to_data()
 //                print("SEND \(data)")

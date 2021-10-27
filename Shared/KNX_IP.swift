@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 /// This enumeration contains the different types of representations of group addresses in ETS4. 2-level and 3-level style are also available in ETS3, the free group address structure is new to ETS4.
 enum ETSGroupAddressStyle_t: String, Codable {
@@ -30,18 +31,6 @@ struct KNXPhysicalAddress: CustomStringConvertible {
 
     var description: String {
         return String(format: "%d.%d.%d", (physicalAddress >> 12) & 0x0F, (physicalAddress >> 8) & 0x0F, physicalAddress & 0xFF)
-    }
-}
-
-struct IPv4: CustomStringConvertible {
-    let ipv4: UInt32
-    init(_ ip: UInt32) {
-        ipv4 = ip
-    }
-
-    /// IPv4 formatting
-    var description: String {
-        return String(format: "%d.%d.%d.%d", (ipv4 >> 24) & 0xFF, (ipv4 >> 16) & 0xFF, (ipv4 >> 8) & 0xFF, (ipv4 >> 0) & 0xFF)
     }
 }
 
@@ -196,11 +185,11 @@ class KNXIPHeader: CustomDebugStringConvertible {
 class KNXHPAI: CustomDebugStringConvertible {
     let headerLength: UInt8 = 8
     let type: UInt8 = 0x01 // UDP
-    var ip_addr: IPv4
+    var ip_addr: IPv4Address
     var ip_port: UInt16
 
     init() {
-        ip_addr = IPv4(0x0000000)
+        ip_addr = .any
         ip_port = 3671
     }
 
@@ -208,7 +197,7 @@ class KNXHPAI: CustomDebugStringConvertible {
         assert(data.count == headerLength)
         assert(data[0] == headerLength)
         assert(data[1] == type)
-        ip_addr = IPv4((UInt32(data[2]) << 24) | (UInt32(data[3]) << 16) | (UInt32(data[4]) << 8) | (UInt32(data[5]) << 0))
+		ip_addr = IPv4Address(data[2..<6])!
         ip_port = (UInt16(data[6]) << 8) | (UInt16(data[7]) << 0)
     }
 
@@ -216,10 +205,10 @@ class KNXHPAI: CustomDebugStringConvertible {
         var data: Data = Data()
         data.append(headerLength)
         data.append(type)
-        data.append(UInt8((ip_addr.ipv4 >> 24) & 0xFF))
-        data.append(UInt8((ip_addr.ipv4 >> 16) & 0xFF))
-        data.append(UInt8((ip_addr.ipv4 >> 8) & 0xFF))
-        data.append(UInt8(ip_addr.ipv4 & 0xFF))
+        data.append(UInt8((ip_addr.rawUInt32Value >> 24) & 0xFF))
+        data.append(UInt8((ip_addr.rawUInt32Value >> 16) & 0xFF))
+        data.append(UInt8((ip_addr.rawUInt32Value >> 8) & 0xFF))
+        data.append(UInt8(ip_addr.rawUInt32Value & 0xFF))
         data.append(UInt8((ip_port >> 8) & 0xFF))
         data.append(UInt8(ip_port & 0xFF))
         return data
@@ -455,7 +444,7 @@ class KNXDIB_DEVICE_INFO: KNXDib {
     var physicalAddress: KNXPhysicalAddress!
     var projectInstallationIdentifier: UInt16!
     var serialNumber: String!
-    var multcastAddress: IPv4!
+    var multcastAddress: IPv4Address!
     var MACAddress: MAC!
     var name: String!
 
@@ -465,7 +454,7 @@ class KNXDIB_DEVICE_INFO: KNXDib {
         physicalAddress = KNXPhysicalAddress((UInt16(data[4]) << 8) | (UInt16(data[5]) << 0))
         projectInstallationIdentifier = (UInt16(data[6]) << 8) | (UInt16(data[7]) << 0)
         serialNumber = KNXSerialNumber(data[8 ..< 14])
-        multcastAddress = IPv4((UInt32(data[14]) << 24) | (UInt32(data[15]) << 16) | (UInt32(data[16]) << 8) | (UInt32(data[17]) << 0))
+        multcastAddress = IPv4Address(data[14..<18])
         MACAddress = MAC(data[18 ..< 24])
         name = String(decoding: data[24 ..< data[0]], as: UTF8.self).trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(CharacterSet(["\0"])))
     }

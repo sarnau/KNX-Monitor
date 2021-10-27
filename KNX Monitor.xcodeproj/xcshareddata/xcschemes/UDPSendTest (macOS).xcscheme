@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "F88F3071270A5E9B009E94B7"
-               BuildableName = "UDPSendTest.app"
+               BuildableName = "KNX Monitor.app"
                BlueprintName = "KNX Monitor (macOS)"
                ReferencedContainer = "container:KNX Monitor.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F88F3071270A5E9B009E94B7"
-            BuildableName = "UDPSendTest.app"
+            BuildableName = "KNX Monitor.app"
             BlueprintName = "KNX Monitor (macOS)"
             ReferencedContainer = "container:KNX Monitor.xcodeproj">
          </BuildableReference>
@@ -62,7 +62,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "F88F3071270A5E9B009E94B7"
-            BuildableName = "UDPSendTest.app"
+            BuildableName = "KNX Monitor.app"
             BlueprintName = "KNX Monitor (macOS)"
             ReferencedContainer = "container:KNX Monitor.xcodeproj">
          </BuildableReference>
