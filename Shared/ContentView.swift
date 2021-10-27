@@ -145,12 +145,10 @@ struct ContentView: View {
                 frame.controlEndpoint.ip_addr = IPv4Address(localHostIP)!
                 frame.controlEndpoint.ip_port = localPort
                 let data = frame.frame_to_data()
-//                print("SEND \(data)")
                 if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
                     print(knxFrame.debugDescription)
                 }
                 udp?.onReceiveData = { (data: Data) in
-//                    print("RECEIVE \(data.hexEncodedString())")
                     if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
                         print(knxFrame.debugDescription)
                     }
