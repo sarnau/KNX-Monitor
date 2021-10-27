@@ -24,7 +24,6 @@ class KNXServerManager: ObservableObject {
                 handler: { (_: String, _: Int, response: Data) -> Void in
                     do {
                         if let knxFrame = try KNXIPFrame.createFrame(data: response) {
-                            // print("\n" + knxFrame.debugDescription)
                             if let response = knxFrame as? KNXIPFrame_SEARCH_RESPONSE {
                                 self.serverList[self.serverIndex] = response
                                 self.serverIndex += 1
