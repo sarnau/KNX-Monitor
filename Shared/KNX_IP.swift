@@ -47,6 +47,17 @@ struct MAC: CustomStringConvertible {
     }
 }
 
+
+extension UInt16 {
+    /// default port for KNXnet/IPx
+	public static let KNXnet_IPx_port : UInt16 = 3671
+}
+
+extension IPv4Address {
+    /// default multicast address for KNXnet/IPx
+	public static let KNXnet_IPx_multicast: IPv4Address = IPv4Address("224.0.23.12")!
+}
+
 // For binary structures, if not explicitly stated otherwise, the byte order shall be big endian mode (Motorola, non-swapped). For plain text formats, the byte order and formatting shall be according to the related protocol specifications.
 
 // KNXnet/IP Header. The KNXnet/IP telegram contains some additional information compared to the TP1 telegram.
@@ -190,7 +201,7 @@ class KNXHPAI: CustomDebugStringConvertible {
 
     init() {
         ip_addr = .any
-        ip_port = 3671
+        ip_port = .KNXnet_IPx_port
     }
 
     func from_data(data: Data) {
