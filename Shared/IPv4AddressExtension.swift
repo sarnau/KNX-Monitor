@@ -1,8 +1,5 @@
 //
 //  IPv4AddressExtension.swift
-//  UDPSendTest
-//
-//  Created by Markus Fritze on 18.10.21.
 //
 
 import Foundation

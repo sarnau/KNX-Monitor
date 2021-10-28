@@ -1,8 +1,5 @@
 //
 //  HexCoding.swift
-//  UDPSendTest
-//
-//  Created by Markus Fritze on 05.10.21.
 //
 
 import Foundation

@@ -1,8 +1,5 @@
 //
 //  KNX_DPT.swift
-//  UDPSendTest
-//
-//  Created by Markus Fritze on 09.10.21.
 //
 
 import Foundation
