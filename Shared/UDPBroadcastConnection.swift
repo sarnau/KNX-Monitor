@@ -8,6 +8,7 @@
 
 import Darwin
 import Foundation
+import Network
 
 // Addresses
 
@@ -54,13 +55,13 @@ open class UDPBroadcastConnection {
     ///   - handler: Handler that gets called when data is received.
     ///   - errorHandler: Handler that gets called when an error occurs.
     /// - Throws: Throws a `ConnectionError` if an error occurs.
-    public init(mcast_port: UInt16, mcast_group: in_addr_t = 0xFFFFFFFF, bindIt: Bool = false, handler: ReceiveHandler?, errorHandler: ErrorHandler?) throws {
-        inaddr_broadcast = in_addr(s_addr: UDPBroadcastConnection.htonsIPv4(ipv4: mcast_group))
+    public init(mcast_port: NWEndpoint.Port, mcast_group: IPv4Address = .any, bindIt: Bool = false, handler: ReceiveHandler?, errorHandler: ErrorHandler?) throws {
+        inaddr_broadcast = in_addr(s_addr: UDPBroadcastConnection.htonsIPv4(ipv4: mcast_group.rawUInt32Value))
 
         address = sockaddr_in(
             sin_len: __uint8_t(MemoryLayout<sockaddr_in>.size),
             sin_family: sa_family_t(AF_INET),
-            sin_port: UDPBroadcastConnection.htonsPort(port: mcast_port),
+            sin_port: UDPBroadcastConnection.htonsPort(port: mcast_port.rawValue),
             sin_addr: inaddr_broadcast,
             sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
         )

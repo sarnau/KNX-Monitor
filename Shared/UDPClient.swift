@@ -16,8 +16,8 @@ class UDPClient {
 
     // MARK: - Public properties
 
-    public let host: String
-    public let port: UInt16
+    public let host: NWEndpoint.Host
+    public let port: NWEndpoint.Port
     public var onReceiveData: OnReceiveData?
     public var onEnd: OnEnd?
 
@@ -27,19 +27,16 @@ class UDPClient {
 
     // MARK: - Initializers
 
-    public init?(host: String, port: UInt16, localHost: String? = nil, localPort: UInt16? = nil) {
+    public init?(host: NWEndpoint.Host, port: NWEndpoint.Port, localHost: NWEndpoint.Host? = nil, localPort: NWEndpoint.Port? = nil) {
 //        print("UDPClient(host=\(host),port=\(port))")
         self.host = host
         self.port = port
-        guard let nwPort = NWEndpoint.Port(rawValue: port) else {
-            return nil
-        }
         let params = NWParameters.udp
         if let localHost = localHost, let localPort = localPort {
-            params.requiredLocalEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(localHost), port: NWEndpoint.Port(rawValue: localPort)!)
+            params.requiredLocalEndpoint = NWEndpoint.hostPort(host: localHost, port: localPort)
         }
         params.allowLocalEndpointReuse = true
-        nwConnection = NWConnection(host: NWEndpoint.Host(host), port: nwPort, using: params)
+        nwConnection = NWConnection(host: host, port: port, using: params)
     }
 
     // MARK: - Public methods

@@ -18,8 +18,8 @@ class KNXServerManager: ObservableObject {
             serverList = [:]
             serverIndex = 0
             broadcastConnection = try UDPBroadcastConnection(
-                mcast_port: UInt16.KNXnet_IPx_port,
-                mcast_group: in_addr_t(IPv4Address.KNXnet_IPx_multicast.rawUInt32Value),
+                mcast_port: .KNXnet_IPx_port,
+                mcast_group: IPv4Address.KNXnet_IPx_multicast,
                 bindIt: true,
                 handler: { (_: String, _: Int, response: Data) -> Void in
                     do {
@@ -59,12 +59,12 @@ class KNXServerManager: ObservableObject {
 }
 
 struct ContentView: View {
-    let localPort: UInt16 = 57923
+    @State var localHostIPv4: IPv4Address = .any
+    let localPort = NWEndpoint.Port(rawValue: 57923)!
     @State var udp: UDPClient?
     @State var monitor: NWPathMonitor?
     @ObservedObject var serverManager = KNXServerManager()
     @State var serverChoice = 0
-    @State var localHostIP: String = ""
     @State var connectChannelID: UInt8 = 0
 
     var body: some View {
@@ -75,21 +75,21 @@ struct ContentView: View {
             Picker("Options", selection: $serverChoice) {
                 ForEach(Array(serverManager.serverList.keys.enumerated()), id: \.element) { index, _ in
                     if let frame = serverManager.serverList[index] {
-                        Text(frame.name! + " (\(frame.hpai.ip_addr):\(frame.hpai.ip_port))")
+                        Text(frame.name! + " (\(frame.hpai.ipv4):\(frame.hpai.ip_port))")
                             .tag(index)
                     }
                 }
             }.pickerStyle(MenuPickerStyle())
             Button("Open") {
                 // find out our local Wifi IP address, which we need inside a KNX package
-                monitor = NWPathMonitor(requiredInterfaceType: .wifi)
+                monitor = NWPathMonitor()
                 monitor?.pathUpdateHandler = { (path: NWPath) in
                     guard path.status == .satisfied else { return }
-                    localHostIP = try! getInterfaceIPAddress(interfaceName: path.availableInterfaces.first!.name)
-                    print("LOCAL IP \(localHostIP):\(localPort)")
+					localHostIPv4 = IPv4Address(try! getInterfaceIPAddress(interfaceName: path.availableInterfaces.first!.name))!
+					print("LOCAL IP \(localHostIPv4):\(localPort)")
                     if let frame = serverManager.serverList[serverChoice] {
-                        print((frame.name!) + " (\(frame.hpai.ip_addr):\(frame.hpai.ip_port))")
-                        udp = UDPClient(host: "\(frame.hpai.ip_addr)", port: frame.hpai.ip_port, localHost: localHostIP, localPort: localPort)
+                        print((frame.name!) + " (\(frame.hpai.ipv4):\(frame.hpai.ip_port))")
+                        udp = UDPClient(host: NWEndpoint.Host.ipv4(frame.hpai.ipv4), port: frame.hpai.ip_port, localHost: NWEndpoint.Host.ipv4(localHostIPv4), localPort: localPort)
                         udp!.start(on: .main)
                     }
                 }
@@ -104,10 +104,10 @@ struct ContentView: View {
 
             Button("Connect") {
                 let frame = KNXIPFrame_CONNECT_REQUEST()
-				frame.controlEndpoint.ip_addr = IPv4Address(localHostIP)!
-                frame.controlEndpoint.ip_port = localPort
-				frame.dataEndpoint.ip_addr = IPv4Address(localHostIP)!
-                frame.dataEndpoint.ip_port = localPort
+                frame.controlEndpoint.ipv4 = localHostIPv4
+				frame.controlEndpoint.ip_port = localPort
+                frame.dataEndpoint.ipv4 = localHostIPv4
+				frame.dataEndpoint.ip_port = localPort
                 frame.criType = .TUNNEL_CONNECTION
                 let data = frame.frame_to_data()
                 if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
@@ -141,8 +141,8 @@ struct ContentView: View {
                 let frame = KNXIPFrame_DISCONNECT_REQUEST()
                 frame.communicationChannelID = connectChannelID
                 connectChannelID = 0
-                frame.controlEndpoint.ip_addr = IPv4Address(localHostIP)!
-                frame.controlEndpoint.ip_port = localPort
+                frame.controlEndpoint.ipv4 = localHostIPv4
+				frame.controlEndpoint.ip_port = localPort
                 let data = frame.frame_to_data()
                 if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
                     print(knxFrame.debugDescription)

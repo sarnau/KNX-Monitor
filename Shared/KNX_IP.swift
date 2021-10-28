@@ -48,9 +48,9 @@ struct MAC: CustomStringConvertible {
 }
 
 
-extension UInt16 {
+extension NWEndpoint.Port {
     /// default port for KNXnet/IPx
-	public static let KNXnet_IPx_port : UInt16 = 3671
+	public static let KNXnet_IPx_port = NWEndpoint.Port(rawValue: 3671)!
 }
 
 extension IPv4Address {
@@ -196,11 +196,11 @@ class KNXIPHeader: CustomDebugStringConvertible {
 class KNXHPAI: CustomDebugStringConvertible {
     let headerLength: UInt8 = 8
     let type: UInt8 = 0x01 // UDP
-    var ip_addr: IPv4Address
-    var ip_port: UInt16
+    var ipv4: IPv4Address
+    var ip_port: NWEndpoint.Port
 
     init() {
-        ip_addr = .any
+        ipv4 = .any
         ip_port = .KNXnet_IPx_port
     }
 
@@ -208,25 +208,25 @@ class KNXHPAI: CustomDebugStringConvertible {
         assert(data.count == headerLength)
         assert(data[0] == headerLength)
         assert(data[1] == type)
-		ip_addr = IPv4Address(data[2..<6])!
-        ip_port = (UInt16(data[6]) << 8) | (UInt16(data[7]) << 0)
+		ipv4 = IPv4Address(data[2..<6])!
+		ip_port = NWEndpoint.Port(rawValue: (UInt16(data[6]) << 8) | (UInt16(data[7]) << 0))!
     }
 
     func to_data() -> Data {
         var data: Data = Data()
         data.append(headerLength)
         data.append(type)
-        data.append(UInt8((ip_addr.rawUInt32Value >> 24) & 0xFF))
-        data.append(UInt8((ip_addr.rawUInt32Value >> 16) & 0xFF))
-        data.append(UInt8((ip_addr.rawUInt32Value >> 8) & 0xFF))
-        data.append(UInt8(ip_addr.rawUInt32Value & 0xFF))
-        data.append(UInt8((ip_port >> 8) & 0xFF))
-        data.append(UInt8(ip_port & 0xFF))
+        data.append(UInt8((ipv4.rawUInt32Value >> 24) & 0xFF))
+        data.append(UInt8((ipv4.rawUInt32Value >> 16) & 0xFF))
+        data.append(UInt8((ipv4.rawUInt32Value >> 8) & 0xFF))
+        data.append(UInt8(ipv4.rawUInt32Value & 0xFF))
+        data.append(UInt8((ip_port.rawValue >> 8) & 0xFF))
+        data.append(UInt8(ip_port.rawValue & 0xFF))
         return data
     }
 
     var debugDescription: String {
-        "\(ip_addr):\(ip_port)"
+        "\(ipv4):\(ip_port)"
     }
 }
 
