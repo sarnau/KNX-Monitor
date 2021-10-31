@@ -72,7 +72,7 @@ struct ContentView: View {
             Picker("Options", selection: $serverChoice) {
                 ForEach(Array(serverManager.serverList.keys.enumerated()), id: \.element) { index, _ in
                     if let frame = serverManager.serverList[index] {
-                        Text(frame.name! + " (\(frame.hpai.ipv4):\(frame.hpai.ip_port))")
+                        Text(frame.name! + " (\(frame.hpai.ipv4):\(frame.hpai.port))")
                             .tag(index)
                     }
                 }
@@ -85,8 +85,8 @@ struct ContentView: View {
 					localHostIPv4 = IPv4Address(try! getInterfaceIPAddress(interfaceName: path.availableInterfaces.first!.name))!
 					print("LOCAL IP \(localHostIPv4):\(localPort)")
                     if let frame = serverManager.serverList[serverChoice] {
-                        print((frame.name!) + " (\(frame.hpai.ipv4):\(frame.hpai.ip_port))")
-                        udp = UDPClient(host: NWEndpoint.Host.ipv4(frame.hpai.ipv4), port: frame.hpai.ip_port, localHost: NWEndpoint.Host.ipv4(localHostIPv4), localPort: localPort)
+                        print((frame.name!) + " (\(frame.hpai.ipv4):\(frame.hpai.port))")
+                        udp = UDPClient(host: NWEndpoint.Host.ipv4(frame.hpai.ipv4), port: frame.hpai.port, localHost: NWEndpoint.Host.ipv4(localHostIPv4), localPort: localPort)
                         udp!.start(on: .main)
                     }
                 }
@@ -102,9 +102,9 @@ struct ContentView: View {
             Button("Connect") {
                 let frame = KNXIPFrame_CONNECT_REQUEST()
                 frame.controlEndpoint.ipv4 = localHostIPv4
-				frame.controlEndpoint.ip_port = localPort
+				frame.controlEndpoint.port = localPort
                 frame.dataEndpoint.ipv4 = localHostIPv4
-				frame.dataEndpoint.ip_port = localPort
+				frame.dataEndpoint.port = localPort
                 frame.criType = .TUNNEL_CONNECTION
                 let data = frame.frame_to_data()
                 if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
@@ -139,7 +139,7 @@ struct ContentView: View {
                 frame.communicationChannelID = connectChannelID
                 connectChannelID = 0
                 frame.controlEndpoint.ipv4 = localHostIPv4
-				frame.controlEndpoint.ip_port = localPort
+				frame.controlEndpoint.port = localPort
                 let data = frame.frame_to_data()
                 if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
                     print(knxFrame.debugDescription)

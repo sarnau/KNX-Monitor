@@ -197,11 +197,11 @@ class KNXHPAI: CustomDebugStringConvertible {
     let headerLength: UInt8 = 8
     let type: UInt8 = 0x01 // UDP
     var ipv4: IPv4Address
-    var ip_port: NWEndpoint.Port
+    var port: NWEndpoint.Port
 
     init() {
         ipv4 = .any
-        ip_port = .KNXnetIPx
+        port = .KNXnetIPx
     }
 
     func from_data(data: Data) {
@@ -209,7 +209,7 @@ class KNXHPAI: CustomDebugStringConvertible {
         assert(data[0] == headerLength)
         assert(data[1] == type)
 		ipv4 = IPv4Address(data[2..<6])!
-		ip_port = NWEndpoint.Port(rawValue: (UInt16(data[6]) << 8) | (UInt16(data[7]) << 0))!
+		port = NWEndpoint.Port(rawValue: (UInt16(data[6]) << 8) | (UInt16(data[7]) << 0))!
     }
 
     func to_data() -> Data {
@@ -220,13 +220,13 @@ class KNXHPAI: CustomDebugStringConvertible {
         data.append(UInt8((ipv4.rawUInt32Value >> 16) & 0xFF))
         data.append(UInt8((ipv4.rawUInt32Value >> 8) & 0xFF))
         data.append(UInt8(ipv4.rawUInt32Value & 0xFF))
-        data.append(UInt8((ip_port.rawValue >> 8) & 0xFF))
-        data.append(UInt8(ip_port.rawValue & 0xFF))
+        data.append(UInt8((port.rawValue >> 8) & 0xFF))
+        data.append(UInt8(port.rawValue & 0xFF))
         return data
     }
 
     var debugDescription: String {
-        "\(ipv4):\(ip_port)"
+        "\(ipv4):\(port)"
     }
 }
 
