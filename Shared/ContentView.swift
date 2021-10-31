@@ -16,7 +16,7 @@ class KNXServerManager: ObservableObject {
             serverIndex = 0
             broadcastConnection = try UDPBroadcastConnection(
                 mcast_port: .KNXnetIPx,
-                mcast_group: IPv4Address.KNXnetIPxGroup,
+                mcast_group: .KNXnetIPxGroup,
                 bindIt: true,
                 handler: { (_: String, _: Int, response: Data) -> Void in
                     do {
