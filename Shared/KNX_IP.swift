@@ -2,7 +2,7 @@ import Foundation
 import Network
 
 /// This enumeration contains the different types of representations of group addresses in ETS4. 2-level and 3-level style are also available in ETS3, the free group address structure is new to ETS4.
-enum ETSGroupAddressStyle_t: String, Codable {
+enum KNXGroupAddressStyle_t: String, Codable {
     case ThreeLevel, TwoLevel, Free
 }
 
@@ -11,7 +11,7 @@ func KNXSerialNumber(_ serialNumber: Data) -> String {
     return serialStr.prefix(4) + ":" + serialStr[serialStr.index(serialStr.startIndex, offsetBy: 4)...]
 }
 
-func GroupAddress(_ address: UInt16?, groupAddressStyle: ETSGroupAddressStyle_t = .ThreeLevel) -> String {
+func KNXGroupAddress(_ address: UInt16?, groupAddressStyle: KNXGroupAddressStyle_t = .ThreeLevel) -> String {
     if let address = address {
         switch groupAddressStyle {
         case .ThreeLevel: return String(format: "%d/%d/%d", address >> (3 + 8), (address >> 8) & 0x7, address & 0xFF)
@@ -50,12 +50,12 @@ struct MAC: CustomStringConvertible {
 
 extension NWEndpoint.Port {
     /// default port for KNXnet/IPx
-	public static let KNXnet_IPx_port = NWEndpoint.Port(rawValue: 3671)!
+	public static let KNXnetIPx = NWEndpoint.Port(rawValue: 3671)!
 }
 
 extension IPv4Address {
     /// default multicast address for KNXnet/IPx
-	public static let KNXnet_IPx_multicast: IPv4Address = IPv4Address("224.0.23.12")!
+	public static let KNXnetIPxGroup = IPv4Address("224.0.23.12")!
 }
 
 // For binary structures, if not explicitly stated otherwise, the byte order shall be big endian mode (Motorola, non-swapped). For plain text formats, the byte order and formatting shall be according to the related protocol specifications.
@@ -201,7 +201,7 @@ class KNXHPAI: CustomDebugStringConvertible {
 
     init() {
         ipv4 = .any
-        ip_port = .KNXnet_IPx_port
+        ip_port = .KNXnetIPx
     }
 
     func from_data(data: Data) {
@@ -974,7 +974,7 @@ class CEMIFrame: CustomDebugStringConvertible {
                 if (tcpi_apci & mask) == value {
                     packageData = pduCommandStr + ":"
                     if flags.destination == .GROUP_ADDRESS {
-                        let groupAddress = GroupAddress(dst_addr)
+                        let groupAddress = KNXGroupAddress(dst_addr)
                         if data.count == 0 {
                             data = Data([UInt8((tcpi_apci & ~mask) & 0x3FF)])
                         }
@@ -998,7 +998,7 @@ class CEMIFrame: CustomDebugStringConvertible {
     var debugDescription: String {
 //        "CODE:\(messageCode) flags:\(flags) SRC:\(src_addr) DST:\(GroupAddress(dst_addr))"
         if flags.destination == .GROUP_ADDRESS {
-            return "CODE:\(messageCode) SRC:\(src_addr) DST:\(GroupAddress(dst_addr)) \(packageData)"
+            return "CODE:\(messageCode) SRC:\(src_addr) DST:\(KNXGroupAddress(dst_addr)) \(packageData)"
         } else {
             return "CODE:\(messageCode) SRC:\(src_addr) DST:\(KNXPhysicalAddress(dst_addr)) \(packageData)"
         }
