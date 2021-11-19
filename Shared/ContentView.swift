@@ -69,7 +69,7 @@ struct ContentView: View {
             Button("Search") {
                 serverManager.searchServers()
             }
-            Picker("Options", selection: $serverChoice) {
+            Picker("Routers", selection: $serverChoice) {
                 ForEach(Array(serverManager.serverList.keys.enumerated()), id: \.element) { index, _ in
                     if let frame = serverManager.serverList[index] {
                         Text(frame.name! + " (\(frame.hpai.ipv4):\(frame.hpai.port))")
@@ -77,80 +77,77 @@ struct ContentView: View {
                     }
                 }
             }.pickerStyle(MenuPickerStyle())
-            Button("Open") {
+            Button("Start Monitor") {
                 // find out our local Wifi IP address, which we need inside a KNX package
                 monitor = NWPathMonitor()
                 monitor?.pathUpdateHandler = { (path: NWPath) in
                     guard path.status == .satisfied else { return }
-					localHostIPv4 = IPv4Address(try! getInterfaceIPAddress(interfaceName: path.availableInterfaces.first!.name))!
-					print("LOCAL IP \(localHostIPv4):\(localPort)")
+                    localHostIPv4 = IPv4Address(try! getInterfaceIPAddress(interfaceName: path.availableInterfaces.first!.name))!
+                    print("LOCAL IP \(localHostIPv4):\(localPort)")
                     if let frame = serverManager.serverList[serverChoice] {
                         print((frame.name!) + " (\(frame.hpai.ipv4):\(frame.hpai.port))")
                         udp = UDPClient(host: NWEndpoint.Host.ipv4(frame.hpai.ipv4), port: frame.hpai.port, localHost: NWEndpoint.Host.ipv4(localHostIPv4), localPort: localPort)
                         udp!.start(on: .main)
+
+                        let frame = KNXIPFrame_CONNECT_REQUEST()
+                        frame.controlEndpoint.ipv4 = localHostIPv4
+                        frame.controlEndpoint.port = localPort
+                        frame.dataEndpoint.ipv4 = localHostIPv4
+                        frame.dataEndpoint.port = localPort
+                        frame.criType = .TUNNEL_CONNECTION
+                        let data = frame.frame_to_data()
+                        if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
+                            print(knxFrame.debugDescription)
+                        } else {
+                            print("SEND UNKNOWN FRAME: \(data)")
+                        }
+                        udp?.onReceiveData = { (data: Data) in
+                            if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
+                                print(knxFrame.debugDescription)
+                                if let response = knxFrame as? KNXIPFrame_CONNECT_RESPONSE {
+                                    connectChannelID = response.communicationChannelID
+                                } else if let response = knxFrame as? KNXIPFrame_TUNNELLING_REQUEST {
+                                    let reply = KNXIPFrame_TUNNELLING_ACK()
+                                    reply.communicationChannelID = response.communicationChannelID
+                                    reply.sequenceCounter = response.sequenceCounter
+                                    reply.status = .E_NO_ERROR
+//                            if let knxFrame = try! KNXIPFrame.createFrame(data: reply.frame_to_data()) {
+//                                print(knxFrame.debugDescription)
+//                            }
+                                    udp?.send(reply.frame_to_data())
+                                }
+                            } else {
+                                print("RECEIVED UNKNOWN FRAME: \(data.hexEncodedString())")
+                            }
+                        }
+                        udp?.send(data)
                     }
                 }
                 monitor?.start(queue: .main)
             }.disabled(udp != nil)
 
-            Button("Close") {
+            Button("Stop Monitor") {
+                if connectChannelID != 0 {
+                    let frame = KNXIPFrame_DISCONNECT_REQUEST()
+                    frame.communicationChannelID = connectChannelID
+                    connectChannelID = 0
+                    frame.controlEndpoint.ipv4 = localHostIPv4
+                    frame.controlEndpoint.port = localPort
+                    let data = frame.frame_to_data()
+                    if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
+                        print(knxFrame.debugDescription)
+                    }
+                    udp?.onReceiveData = { (data: Data) in
+                        if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
+                            print(knxFrame.debugDescription)
+                        }
+                    }
+                    udp?.send(data)
+                }
                 monitor = nil
                 udp!.stop()
                 udp = nil
             }.disabled(udp == nil)
-
-            Button("Connect") {
-                let frame = KNXIPFrame_CONNECT_REQUEST()
-                frame.controlEndpoint.ipv4 = localHostIPv4
-				frame.controlEndpoint.port = localPort
-                frame.dataEndpoint.ipv4 = localHostIPv4
-				frame.dataEndpoint.port = localPort
-                frame.criType = .TUNNEL_CONNECTION
-                let data = frame.frame_to_data()
-                if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
-                    print(knxFrame.debugDescription)
-                } else {
-                    print("SEND UNKNOWN FRAME: \(data)")
-                }
-                udp?.onReceiveData = { (data: Data) in
-                    if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
-                        print(knxFrame.debugDescription)
-                        if let response = knxFrame as? KNXIPFrame_CONNECT_RESPONSE {
-                            connectChannelID = response.communicationChannelID
-                        } else if let response = knxFrame as? KNXIPFrame_TUNNELLING_REQUEST {
-                            let reply = KNXIPFrame_TUNNELLING_ACK()
-                            reply.communicationChannelID = response.communicationChannelID
-                            reply.sequenceCounter = response.sequenceCounter
-                            reply.status = .E_NO_ERROR
-//                            if let knxFrame = try! KNXIPFrame.createFrame(data: reply.frame_to_data()) {
-//                                print(knxFrame.debugDescription)
-//                            }
-                            udp?.send(reply.frame_to_data())
-                        }
-                    } else {
-                        print("RECEIVED UNKNOWN FRAME: \(data.hexEncodedString())")
-                    }
-                }
-                udp?.send(data)
-            }.disabled(udp == nil || connectChannelID != 0)
-
-            Button("Disconnect") {
-                let frame = KNXIPFrame_DISCONNECT_REQUEST()
-                frame.communicationChannelID = connectChannelID
-                connectChannelID = 0
-                frame.controlEndpoint.ipv4 = localHostIPv4
-				frame.controlEndpoint.port = localPort
-                let data = frame.frame_to_data()
-                if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
-                    print(knxFrame.debugDescription)
-                }
-                udp?.onReceiveData = { (data: Data) in
-                    if let knxFrame = try! KNXIPFrame.createFrame(data: data) {
-                        print(knxFrame.debugDescription)
-                    }
-                }
-                udp?.send(data)
-            }.disabled(udp == nil || connectChannelID == 0)
         }.padding()
     }
 }
