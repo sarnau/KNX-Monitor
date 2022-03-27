@@ -28,6 +28,8 @@ enum KNXDPT {
         DPT_10_001_TimeOfDay, // DPTTime
         DPT_11_001_Date, // DPTTime
         DPT_12_100_LongTimePeriod_Sec,
+        DPT_13_xxx, // DPT4ByteSigned
+        DPT_13_013_ActiveEnergy_kWh,
         DPT_14_xxx, // DPT4ByteFloat
         DPT_14_019_Value_Electric_Current,
         DPT_14_027_Value_Electric_Potential,
@@ -80,6 +82,10 @@ private func from4ByteUInt(data: Data) -> UInt32 {
     return UInt32(bigEndian: data.withUnsafeBytes { $0.load(as: UInt32.self) })
 }
 
+private func from4ByteInt(data: Data) -> Int32 {
+    return Int32(bigEndian: data.withUnsafeBytes { $0.load(as: Int32.self) })
+}
+
 private func from4ByteFloat(data: Data) -> Float {
     return Float(bitPattern: UInt32(bigEndian: data.withUnsafeBytes { $0.load(as: UInt32.self) }))
 }
@@ -88,14 +94,6 @@ func convert_from_knx(data: Data, dpt: KNXDPT) -> String {
     switch dpt {
     case .DPT_1_xxx:
         return String(format: "1.xxx:%d", data[0])
-    case .DPT_9_xxx:
-        return String(format: "9.xxx:%.1f", from2ByteFloat(data: data))
-    case .DPT_10_001_TimeOfDay:
-        return "DPT_TimeOfDay" + from3ByteTime(data: data).description
-    case .DPT_11_001_Date:
-        return "DPT_Date" + from3ByteDate(data: data).description
-    case .DPT_14_xxx:
-        return String(format: "14.xxx:%.1f", from4ByteFloat(data: data))
     case .DPT_1_001_Switch:
         return "DPT_Switch(" + (data[0] != 0 ? "On" : "Off") + ")"
     case .DPT_1_005_Alarm:
@@ -116,6 +114,8 @@ func convert_from_knx(data: Data, dpt: KNXDPT) -> String {
         return String(format: "DPT_Value_1_Ucount(%d)", data[0])
     case .DPT_7_600_Absolute_Colour_Temperature:
         return String(format: "%dK", from2ByteUInt(data: data))
+    case .DPT_9_xxx:
+        return String(format: "9.xxx:%.1f", from2ByteFloat(data: data))
     case .DPT_9_001_Value_Temp:
         return String(format: "%.1f℃", from2ByteFloat(data: data))
     case .DPT_9_002_Value_Tempd:
@@ -130,8 +130,18 @@ func convert_from_knx(data: Data, dpt: KNXDPT) -> String {
         return String(format: "%.1f%%%", from2ByteFloat(data: data))
     case .DPT_9_030_Concentration_µgm3:
         return String(format: "%.1fµg/m³", from2ByteFloat(data: data))
+    case .DPT_10_001_TimeOfDay:
+        return "DPT_TimeOfDay" + from3ByteTime(data: data).description
+    case .DPT_11_001_Date:
+        return "DPT_Date" + from3ByteDate(data: data).description
     case .DPT_12_100_LongTimePeriod_Sec:
         return String(format: "%ds", from4ByteUInt(data: data))
+    case .DPT_13_xxx:
+        return String(format: "%d", from4ByteInt(data: data))
+    case .DPT_13_013_ActiveEnergy_kWh:
+        return String(format: "%dkWh", from4ByteInt(data: data))
+    case .DPT_14_xxx:
+        return String(format: "14.xxx:%.1f", from4ByteFloat(data: data))
     case .DPT_14_019_Value_Electric_Current:
         return String(format: "%.1fA", from4ByteFloat(data: data))
     case .DPT_14_027_Value_Electric_Potential:

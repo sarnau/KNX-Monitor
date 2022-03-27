@@ -419,6 +419,8 @@ let groupAddress_to_dpt_conversionTable: Dictionary<String, KNXDPT> = [
     "5/7/64": .DPT_14_019_Value_Electric_Current,
     "5/7/65": .DPT_14_057_Value_Power_Factor,
     "5/7/66": .DPT_14_033_Value_Frequency,
+    "5/7/100": .DPT_13_013_ActiveEnergy_kWh,
+    "5/7/101": .DPT_13_013_ActiveEnergy_kWh,
     "6/0/10": .DPT_5_010_Value_1_Ucount,
     "7/1/0": .DPT_1_005_Alarm,
     "7/2/0": .DPT_1_005_Alarm,
