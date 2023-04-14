@@ -31,11 +31,13 @@ enum KNXDPT {
         DPT_13_xxx, // DPT4ByteSigned
         DPT_13_013_ActiveEnergy_kWh,
         DPT_14_xxx, // DPT4ByteFloat
+        DPT_14_005_Value_Amplitude,
         DPT_14_019_Value_Electric_Current,
         DPT_14_027_Value_Electric_Potential,
         DPT_14_033_Value_Frequency,
         DPT_14_056_Value_Power,
         DPT_14_057_Value_Power_Factor,
+        DPT_14_068_Value_Common_Temperature,
         DPT_14_076_Value_Volume,
         DPT_undefined
 }
@@ -43,7 +45,7 @@ enum KNXDPT {
 private func from2ByteFloat(data: Data) -> Float {
     let data = from2ByteUInt(data: data)
     let exponent = (data >> 11) & 0x0F
-    var significand = data & 0x7FF
+    var significand = Int16(data & 0x7FF)
     let sign = data >> 15
     if sign == 1 {
         significand -= 2048
@@ -142,6 +144,8 @@ func convert_from_knx(data: Data, dpt: KNXDPT) -> String {
         return String(format: "%dkWh", from4ByteInt(data: data))
     case .DPT_14_xxx:
         return String(format: "14.xxx:%.1f", from4ByteFloat(data: data))
+    case .DPT_14_005_Value_Amplitude:
+        return String(format: "%.1f", from4ByteFloat(data: data))
     case .DPT_14_019_Value_Electric_Current:
         return String(format: "%.1fA", from4ByteFloat(data: data))
     case .DPT_14_027_Value_Electric_Potential:
@@ -152,6 +156,8 @@ func convert_from_knx(data: Data, dpt: KNXDPT) -> String {
         return String(format: "%.1fW", from4ByteFloat(data: data))
     case .DPT_14_057_Value_Power_Factor:
         return String(format: "%.1fcos Φ", from4ByteFloat(data: data))
+    case .DPT_14_068_Value_Common_Temperature:
+        return String(format: "%.1f℃", from4ByteFloat(data: data))
     case .DPT_14_076_Value_Volume:
         return String(format: "%.1fm³", from4ByteFloat(data: data))
     case .DPT_undefined:
